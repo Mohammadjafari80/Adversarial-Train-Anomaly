@@ -167,7 +167,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
        optimizer.step()
        tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
-  save_image(tensor=data, fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=4)
+  save_image(tensor=data, fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=8)
   results["Train Accuracy"].append(100. * accuracy)
   results["Loss"].append(running_loss / len(preds))
   df = pd.DataFrame(results)
