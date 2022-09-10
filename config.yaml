@@ -1,0 +1,13 @@
+dataset: mvtec #options [cifar]
+cifar_root: ~/.datasets
+backbone: 18
+pretrained: True
+normal_class: airplane #  MVTEC exmple: bottle, Cifar example: airplane
+batch_size: 8
+auc_every: 5 # Takes too much time
+n_epochs: 50 # Number of all iterations
+work_dir: ./logs/
+attack_type: PGD
+attack_params: { "eps": 0.03, "steps": 100 }
+results_path: ./results/ # saves results as csv row in this folder
+output_file_name: train_results # saves csv file with name {output_file_name}.csv

@@ -4,16 +4,16 @@ import torch.nn as nn
 import torch.optim as optim
 
 class FeatureExtractor(nn.Module):
-  def __init__(self, model='18'):
+  def __init__(self, model=18, pretrained=True):
     super(FeatureExtractor, self).__init__()
 
     # Load a pretrained resnet model from torchvision.models in Pytorch
     self.model = None
 
-    if model == '18':
-        self.model = models.resnet18(pretrained=True)
+    if model == 18:
+        self.model = models.resnet18(pretrained=pretrained)
     else:
-        self.model = models.resnet152(pretrained=True)
+        self.model = models.resnet152(pretrained=pretrained)
 
     num_ftrs = self.model.fc.in_features
     self.model.fc = nn.Flatten()
