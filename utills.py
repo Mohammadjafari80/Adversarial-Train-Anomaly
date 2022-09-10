@@ -5,6 +5,11 @@ import torch
 from tqdm import tqdm
 import torchvision.transforms as transforms
 
+cifar10_mean = (0.4914, 0.4822, 0.4465)
+cifar10_std = (0.2471, 0.2435, 0.2616)
+
+mu = torch.tensor(cifar10_mean).view(3,1,1).cuda()
+std = torch.tensor(cifar10_std).view(3,1,1).cuda()
 
 def knn_score(train_set, test_set, n_neighbours=2):
     """
@@ -123,8 +128,7 @@ def get_data(model, G, data, target, attack, device):
     x = transforms.Resize((32, 32))(x)
     x = transforms.Resize((224, 224))(x)
 
-    fake_data = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(x)
-    data = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(data)
+    fake_data = (x - torch.min(x))/(torch.max(x)- torch.min(x))
     fake_target = torch.ones_like(target, device=device)
 
     new_data = torch.cat((fake_data, data))

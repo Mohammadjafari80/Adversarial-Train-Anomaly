@@ -26,7 +26,7 @@ with open('./config.yaml') as f:
 batch_size = config['batch_size']
 normal_class = config['normal_class'] #@param ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']                                      
 NUMBER_OF_EPOCHS = config['n_epochs']
-attack_params = config['n_epochs']
+attack_params = config['attack_params']
 AUC_EVERY = config['auc_every']
 
 if not os.path.exists(config['results_path']):
@@ -54,8 +54,7 @@ attack_params['model'] = model
 #######################
 
 transform = transforms.Compose([transforms.Resize((224, 224)),
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+                                        transforms.ToTensor()])
 
 inv_normalize = transforms.Normalize(
     mean=[-0.485/0.229, -0.456/0.224, -0.406/0.255],
@@ -94,7 +93,7 @@ G = make_gan(gan_type='biggan', model_name='biggan-deep-128').to(device)
 
 attack = None
 
-if config['attachk_type'] == 'PGD':
+if config['attack_type'] == 'PGD':
     attack = PGD(**attack_params)
 else:
     attack = FGSM(**attack_params)
@@ -105,12 +104,12 @@ results = {}
 try:
     results = pd.read_csv(os.path.join(config['results_path'], f'{config["output_file_name"]}.csv')).to_dict(orient='list')
 except:
-    results['attack_config'] = []
-    results['label'] = []
-    results['auc_adv'] = []
-    results['sim_adv'] = []
-    results['auc_org'] = []
-    results['sim_org'] = []
+    results['Softmax AUC'] = []
+    results['Softmax Adversairal AUC'] = []
+    results['KNN AUC'] = []
+    results['KNN Adversairal AUC'] = []
+    results['Train Accuracy'] = []
+    results['Loss'] = []
 
 ##############
 #  Training  #
@@ -124,19 +123,24 @@ for epoch in range(NUMBER_OF_EPOCHS):
 
 
   if epoch % AUC_EVERY == 0 :
-      torch.cuda.empty_cache()
-      model.eval()
-      print('*' * 50)
-      auc = auc_softmax(model=model, epoch=epoch, test_loader=test_loader, device=device)
-      results["Softmax AUC"].append(auc * 100)
-      print('*' * 50)
-      adv_auc = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=test_loader, attack=attack, device=device)
-      results["Softmax Adversairal AUC"].append(adv_auc * 100)
-      print('*' * 50)
-      auc, adv_auc = test_AUC(model=model, epoch=epoch, train_loader=train_loader, test_loader=test_loader, attack=attack, device=device)
-      results["KNN AUC"].append(auc * 100)
-      results["KNN Adversairal AUC"].append(adv_auc * 100)
-      print('*' * 50)
+        torch.cuda.empty_cache()
+        model.eval()
+        print('*' * 50)
+        auc = auc_softmax(model=model, epoch=epoch, test_loader=test_loader, device=device)
+        results["Softmax AUC"].append(auc * 100)
+        print('*' * 50)
+        adv_auc = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=test_loader, attack=attack, device=device)
+        results["Softmax Adversairal AUC"].append(adv_auc * 100)
+        print('*' * 50)
+        auc, adv_auc = test_AUC(model=model, epoch=epoch, train_loader=train_loader, test_loader=test_loader, attack=attack, device=device)
+        results["KNN AUC"].append(auc * 100)
+        results["KNN Adversairal AUC"].append(adv_auc * 100)
+        print('*' * 50)
+  else:
+        results["Softmax AUC"].append('-')
+        results["Softmax Adversairal AUC"].append('-')
+        results["KNN AUC"].append('-')
+        results["KNN Adversairal AUC"].append('-')
 
   model.train()
   preds = []
@@ -162,7 +166,6 @@ for epoch in range(NUMBER_OF_EPOCHS):
        optimizer.step()
        tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
-  data = inv_normalize(data)
   save_image(tensor=data, fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=4)
   results["Train Accuracy"].append(100. * accuracy)
   results["Loss"].append(running_loss / len(preds))

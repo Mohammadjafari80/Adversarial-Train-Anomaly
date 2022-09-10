@@ -9,7 +9,7 @@ class FeatureExtractor(nn.Module):
 
     # Load a pretrained resnet model from torchvision.models in Pytorch
     self.model = None
-
+    self.norm = nn.BatchNorm2d(3)
     if model == 18:
         self.model = models.resnet18(pretrained=pretrained)
     else:
@@ -20,10 +20,12 @@ class FeatureExtractor(nn.Module):
     self.head = nn.Linear(num_ftrs, 2)
 
   def forward(self, x):
+    x = self.norm(x)
     x = self.model(x)
     x = self.head(x)
     return x
 
   def get_feature_vector(self, x):
+    x = self.norm(x)
     x = self.model(x)
     return x
