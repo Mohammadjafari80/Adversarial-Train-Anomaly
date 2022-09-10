@@ -98,6 +98,7 @@ if config['attack_type'] == 'PGD':
 else:
     attack = FGSM(**attack_params)
 
+attack.set_mode_targeted_least_likely()
 
 
 results = {}
