@@ -10,9 +10,9 @@ def get_dataloader(transform, dataset='cifar', normal_class_indx = 0, batch_size
     if dataset == 'cifar':
         return get_CIFAR10(transform, normal_class_indx, batch_size)
     elif dataset == 'mnist':
-        return get_CIFAR10(transform, normal_class_indx, batch_size)
+        return get_MNIST(transform, normal_class_indx, batch_size)
     elif dataset == 'fashion-mnist':
-        return get_CIFAR10(transform, normal_class_indx, batch_size)
+        return get_FASHION_MNIST(transform, normal_class_indx, batch_size)
     else:
         raise Exception("Dataset is not supported yet. ")
 
