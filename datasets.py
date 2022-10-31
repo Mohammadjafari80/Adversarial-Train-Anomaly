@@ -1,4 +1,4 @@
-from torchvision.datasets import CIFAR10, MNIST, SVHN, CIFAR100, FashionMNIST
+from torchvision.datasets import CIFAR10, MNIST, SVHN, FashionMNIST
 import os
 import torch
 import numpy as np
@@ -6,8 +6,15 @@ import numpy as np
 cifar_labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 mnist_labels = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 
-def get_dataloader(transform, dataset='cifar', normal_class_indx = 0):
-    pass
+def get_dataloader(transform, dataset='cifar', normal_class_indx = 0, batch_size=8):
+    if dataset == 'cifar':
+        return get_CIFAR10(transform, normal_class_indx, batch_size)
+    elif dataset == 'mnist':
+        return get_CIFAR10(transform, normal_class_indx, batch_size)
+    elif dataset == 'fashion-mnist':
+        return get_CIFAR10(transform, normal_class_indx, batch_size)
+    else:
+        raise Exception("Dataset is not supported yet. ")
 
 
 def get_CIFAR10(transform, normal_class_indx, batch_size):

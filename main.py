@@ -11,9 +11,14 @@ import os
 import torchvision.transforms as transforms
 from pytorch_pretrained_gans import make_gan
 from torchattacks import FGSM, PGD
+import logging
 from tqdm import tqdm
 from torchvision.utils import save_image
 import pandas as pd
+from datasets import get_dataloader
+
+
+
 
 #################
 #  Load CONFIG  #
@@ -24,7 +29,8 @@ with open('./config.yaml') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 batch_size = config['batch_size']
-normal_class = config['normal_class'] #@param ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']                                      
+dataset = config['dataset']
+normal_class_indx = int(config['normal_class_indx'])                              
 NUMBER_OF_EPOCHS = config['n_epochs']
 attack_params = config['attack_params']
 AUC_EVERY = config['auc_every']
@@ -32,17 +38,26 @@ AUC_EVERY = config['auc_every']
 if not os.path.exists(config['results_path']):
     os.makedirs(config['results_path'])
 
+
+#############
+#  LOGGING  #
+#############
+
+import logging
+
+logging.basicConfig(filename=os.path.join(config['results_path'], 'app.log'), filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+
 #################
 #  Set Device   #
 #################
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+logging.INFO(f'Device : {device}')
 
 #################
 #  Load Model   #
 #################
-
 
 model = FeatureExtractor(model=config['backbone'], pretrained=config['pretrained'])
 model.to(device)
@@ -66,17 +81,7 @@ inv_normalize = transforms.Normalize(
 #  Prepare Datasets   #
 #######################
 
-cifar_labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-normal_class_indx = cifar_labels.index(normal_class)
-
-trainset = CIFAR10(root=os.path.join('~', 'cifar10'), train=True, download=True, transform=transform)
-trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
-trainset.targets  = [0 for t in trainset.targets]
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
-
-testset = CIFAR10(root=os.path.join('~/', 'cifar10'), train=False, download=True, transform=transform)
-testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
-test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+train_loader, test_loader = get_dataloader(transform, dataset, normal_class_indx, batch_size)
 
 
 ###############

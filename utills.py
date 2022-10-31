@@ -126,7 +126,6 @@ def get_data(model, G, data, target, attack, device):
     z = G.sample_latent(batch_size=data.shape[0])  
     x = G(z=z.to(device), y=y.to(device)).to(device)
     x = transforms.Resize((32, 32))(x)
-    x = transforms.Resize((224, 224))(x)
 
     fake_data = (x - torch.min(x))/(torch.max(x)- torch.min(x))
     fake_target = torch.ones_like(target, device=device)
