@@ -46,6 +46,9 @@ if not os.path.exists(config['results_path']):
 import logging
 
 logging.basicConfig(filename=os.path.join(config['results_path'], 'app.log'), filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 
 #################
@@ -53,7 +56,7 @@ logging.basicConfig(filename=os.path.join(config['results_path'], 'app.log'), fi
 #################
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-logging.INFO(f'Device : {device}')
+logger.info(f'Device : {device}')
 
 #################
 #  Load Model   #
