@@ -2,6 +2,7 @@ from torchvision import models
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import preactresnet
 
 class FeatureExtractor(nn.Module):
   def __init__(self, model=18, pretrained=True):
@@ -11,12 +12,18 @@ class FeatureExtractor(nn.Module):
     self.model = None
     self.norm = nn.BatchNorm2d(3)
     if model == 18:
-        self.model = models.resnet18(pretrained=pretrained)
+        self.model = preactresnet.PreActResNet18()
+    elif model == 34:
+        self.model = preactresnet.PreActResNet34()
+    elif model == 50:
+        self.model = preactresnet.PreActResNet50()
+    elif model == 101:
+        self.model = preactresnet.PreActResNet101()
     else:
-        self.model = models.resnet152(pretrained=pretrained)
+        self.model = preactresnet.PreActResNet152()
 
-    num_ftrs = self.model.fc.in_features
-    self.model.fc = nn.Flatten()
+    num_ftrs = self.model.linear.in_features
+    self.model.linear = nn.Flatten()
     self.head = nn.Linear(num_ftrs, 2)
 
   def forward(self, x):
@@ -29,3 +36,7 @@ class FeatureExtractor(nn.Module):
     x = self.norm(x)
     x = self.model(x)
     return x
+
+
+net = FeatureExtractor()
+print(net)
