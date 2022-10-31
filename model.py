@@ -4,13 +4,21 @@ import torch.nn as nn
 import torch.optim as optim
 import preactresnet
 
+cifar10_mean = (0.4914, 0.4822, 0.4465)
+cifar10_std = (0.2471, 0.2435, 0.2616)
+
+mu = torch.tensor(cifar10_mean).view(3,1,1).cuda()
+std = torch.tensor(cifar10_std).view(3,1,1).cuda()
+
+
 class FeatureExtractor(nn.Module):
   def __init__(self, model=18, pretrained=True):
     super(FeatureExtractor, self).__init__()
 
     # Load a pretrained resnet model from torchvision.models in Pytorch
     self.model = None
-    self.norm = nn.BatchNorm2d(3)
+    self.norm = lambda x: ( x - mu ) / std
+    
     if model == 18:
         self.model = preactresnet.PreActResNet18()
     elif model == 34:
