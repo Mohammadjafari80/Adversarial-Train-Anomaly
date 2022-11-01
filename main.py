@@ -116,8 +116,19 @@ except:
 ##############
 
 learning_rate = 1e-5
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
 criterion = nn.CrossEntropyLoss()
+
+
+
+def lr_schedule(t):
+    if t / NUMBER_OF_EPOCHS < 0.5:
+        return 0.1
+    elif t / NUMBER_OF_EPOCHS < 0.75:
+        return 0.1 / 10.
+    else:
+        return 0.1 / 100.
+  
 
 for epoch in range(NUMBER_OF_EPOCHS):
 
@@ -158,6 +169,9 @@ for epoch in range(NUMBER_OF_EPOCHS):
      torch.cuda.empty_cache()
      for i, (data, target) in enumerate(tepoch):
        tepoch.set_description(f"Epoch {epoch + 1}/{NUMBER_OF_EPOCHS}")
+       lr = lr_schedule(epoch + (i + 1) / len(tepoch)) 
+       optimizer.param_groups[0].update(lr=lr)
+       
        data, target = data.to(device), target.to(device)
        data, target = get_data(config['use_gan'], model, exposure_loader, G, data, target, attack, device)
        target = target.type(torch.LongTensor).cuda()
