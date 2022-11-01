@@ -1,6 +1,6 @@
 dataset: mnist #options [cifar, mnist, fashion-mnist]
-backbone: 18
-pretrained: True
+backbone: 18 #options [18, 34, 50, 101, 152]
+pretrained: True # ignore for now
 normal_class_indx: 0
 batch_size: 32
 auc_every: 1 # Takes too much time
@@ -8,7 +8,7 @@ n_epochs: 30 # Number of all iterations
 work_dir: ./logs/
 attack_type: PGD
 attack_params: { "eps": 0.03, "steps": 10 }
-knn_attack: False # TODO
+knn_attack: False # TODO, keep it false
 results_path: ./results/ # saves results as csv row in this folder
 output_file_name: train_results # saves csv file with name {output_file_name}.csv
 use_gan: False # if True, uses Gan images as exposure
