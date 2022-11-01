@@ -81,13 +81,13 @@ def get_FASHION_MNIST(normal_class_indx, batch_size):
 
 def get_SVHN(normal_class_indx, batch_size):
 
-    trainset = SVHN(root=os.path.join('~', 'SVHN'), train=True, download=True, transform=transform)
-    trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
-    trainset.targets  = [0 for t in trainset.targets]
+    trainset = SVHN(root=os.path.join('~', 'SVHN'), split='train', download=True, transform=transform)
+    trainset.data = trainset.data[np.array(trainset.labels) == normal_class_indx]
+    trainset.labels  = [0 for t in trainset.labels]
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
-    testset = SVHN(root=os.path.join('~', 'SVHN'), train=False, download=True, transform=transform)
-    testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
+    testset = SVHN(root=os.path.join('~', 'SVHN'), split='test', download=True, transform=transform)
+    testset.labels  = [int(t!=normal_class_indx) for t in testset.labels]
     test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
 
     return train_loader, test_loader
