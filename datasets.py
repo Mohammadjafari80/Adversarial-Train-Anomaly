@@ -32,6 +32,8 @@ def get_dataloader(dataset='cifar', normal_class_indx = 0, batch_size=8):
         return get_MNIST(normal_class_indx, batch_size)
     elif dataset == 'fashion-mnist':
         return get_FASHION_MNIST(normal_class_indx, batch_size)
+    elif dataset == 'svhn':
+        return get_SVHN(normal_class_indx, batch_size)
     else:
         raise Exception("Dataset is not supported yet. ")
 
@@ -72,6 +74,19 @@ def get_FASHION_MNIST(normal_class_indx, batch_size):
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     testset = FashionMNIST(root=os.path.join('~', 'fashion-mnist'), train=False, download=True, transform=transform_1_channel)
+    testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+
+    return train_loader, test_loader
+
+def get_SVHN(normal_class_indx, batch_size):
+
+    trainset = SVHN(root=os.path.join('~', 'SVHN'), train=True, download=True, transform=transform_1_channel)
+    trainset.data = trainset.data[np.array(trainset.targets) == normal_class_indx]
+    trainset.targets  = [0 for t in trainset.targets]
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+
+    testset = SVHN(root=os.path.join('~', 'SVHN'), train=False, download=True, transform=transform_1_channel)
     testset.targets  = [int(t!=normal_class_indx) for t in testset.targets]
     test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
 

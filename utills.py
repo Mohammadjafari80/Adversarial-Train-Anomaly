@@ -151,7 +151,7 @@ def get_data(use_gan, model, exposure_loader, G, data, target, attack, device):
     else:
       fake_data = next(iter(exposure_loader)).to(device)
 
-    fake_target = torch.ones_like(target, device=device)
+    fake_target = torch.ones((fake_data.shape[0]), device=device)
 
     new_data = torch.cat((fake_data, data))
     new_target = torch.cat((fake_target, target))
