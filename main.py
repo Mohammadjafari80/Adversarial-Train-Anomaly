@@ -79,7 +79,7 @@ logger.info(f'Dataset: {dataset} - Normal-Class-Index: {normal_class_indx}')
 
 G, exposure_dataset, exposure_loader = None, None, None
 
-if config['gan']:
+if config['use_gan']:
     G = make_gan(gan_type='biggan', model_name='biggan-deep-128').to(device)
 else:
     exposure_dataset = Exposure(root=config['exposure_folder'])
