@@ -8,16 +8,13 @@ import yaml
 from torchvision.datasets import CIFAR10, MNIST
 import numpy as np
 import os
-import torchvision.transforms as transforms
 from pytorch_pretrained_gans import make_gan
 from torchattacks import FGSM, PGD
 import logging
 from tqdm import tqdm
 from torchvision.utils import save_image
 import pandas as pd
-from datasets import get_dataloader
-
-
+from datasets import Exposure, get_dataloader
 
 
 #################
@@ -50,7 +47,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
-
 #################
 #  Set Device   #
 #################
@@ -67,32 +63,26 @@ model.to(device)
 model.eval()
 attack_params['model'] = model
 
-#######################
-#  Define Transform   #
-#######################
-
-transform = transforms.Compose([transforms.Resize((32, 32)),
-                                        transforms.ToTensor()])
-
-inv_normalize = transforms.Normalize(
-    mean=[-0.485/0.229, -0.456/0.224, -0.406/0.255],
-    std=[1/0.229, 1/0.224, 1/0.255]
-)
 
 
 #######################
 #  Prepare Datasets   #
 #######################
 
-train_loader, test_loader = get_dataloader(transform, dataset, normal_class_indx, batch_size)
+train_loader, test_loader = get_dataloader(dataset, normal_class_indx, batch_size)
 
 
-###############
-#  Load GAN   #
-###############
+####################
+#  Load Exposure   #
+####################
 
+G, exposure_dataset, exposure_loader = None, None, None
 
-G = make_gan(gan_type='biggan', model_name='biggan-deep-128').to(device)
+if config['gan']:
+    G = make_gan(gan_type='biggan', model_name='biggan-deep-128').to(device)
+else:
+    exposure_dataset = Exposure(root=config['exposure_folder'])
+    exposure_loader = torch.utils.data.DataLoader(exposure_dataset, shuffle=True, batch_size=batch_size)
 
 
 ###################
@@ -155,6 +145,8 @@ for epoch in range(NUMBER_OF_EPOCHS):
   preds = []
   true_labels = []
   running_loss = 0
+  
+  first_batch = None
 
   with tqdm(train_loader, unit="batch") as tepoch:
      torch.cuda.empty_cache()
@@ -162,6 +154,8 @@ for epoch in range(NUMBER_OF_EPOCHS):
        tepoch.set_description(f"Epoch {epoch + 1}/{NUMBER_OF_EPOCHS}")
        data, target = data.to(device), target.to(device)
        data, target = get_data(model, G, data, target, attack, device)
+       if i == 0:
+          first_batch = data.detach().clone()
        optimizer.zero_grad()
        output = model(data)
        predictions = output.argmax(dim=1, keepdim=True).squeeze()
@@ -175,10 +169,12 @@ for epoch in range(NUMBER_OF_EPOCHS):
        optimizer.step()
        tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
-  save_image(tensor=data, fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=8)
+  image_shape = first_batch.shape[0]
+  save_image(tensor=first_batch, fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=image_shape//2)
   results["Train Accuracy"].append(100. * accuracy)
   results["Loss"].append(running_loss / len(preds))
   df = pd.DataFrame(results)
   df.to_csv(os.path.join(config['results_path'], f'{config["output_file_name"]}.csv'), index=False)
   print(f'Updated resutls at {os.path.join(config["results_path"])}')
+  logger.info(f'Updated resutls at {os.path.join(config["results_path"])}')
 

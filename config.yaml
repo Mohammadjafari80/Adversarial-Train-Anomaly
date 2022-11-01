@@ -10,3 +10,4 @@ attack_type: PGD
 attack_params: { "eps": 0.03, "steps": 100 }
 results_path: ./results/ # saves results as csv row in this folder
 output_file_name: train_results # saves csv file with name {output_file_name}.csv
+exposure_folder: "/mnt/sda3/home/ma_hadi/CURRENT-CLASS-EXPOSURE/" # Path to the folder of .png files
