@@ -132,10 +132,15 @@ for epoch in range(NUMBER_OF_EPOCHS):
         adv_auc = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=test_loader, attack=attack, device=device)
         results["Softmax Adversairal AUC"].append(adv_auc * 100)
         print('*' * 50)
-        auc, adv_auc = test_AUC(model=model, epoch=epoch, train_loader=train_loader, test_loader=test_loader, attack=attack, device=device)
-        results["KNN AUC"].append(auc * 100)
-        results["KNN Adversairal AUC"].append(adv_auc * 100)
-        print('*' * 50)
+        if config['knn_attack']:
+            auc, adv_auc = test_AUC(model=model, epoch=epoch, train_loader=train_loader, test_loader=test_loader, attack=attack, device=device, attack_type=config['attack_type'])
+            results["KNN AUC"].append(auc * 100)
+            results["KNN Adversairal AUC"].append(adv_auc * 100)
+            print('*' * 50)
+        else:
+            results["KNN AUC"].append('-')
+            results["KNN Adversairal AUC"].append('-')
+
   else:
         results["Softmax AUC"].append('-')
         results["Softmax Adversairal AUC"].append('-')
@@ -154,7 +159,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
      for i, (data, target) in enumerate(tepoch):
        tepoch.set_description(f"Epoch {epoch + 1}/{NUMBER_OF_EPOCHS}")
        data, target = data.to(device), target.to(device)
-       data, target = get_data(model, exposure_loader, G, data, target, attack, device)
+       data, target = get_data(config['use_gan'], model, exposure_loader, G, data, target, attack, device)
        if i == 0:
           first_batch = data.detach().clone()
        optimizer.zero_grad()
@@ -171,7 +176,8 @@ for epoch in range(NUMBER_OF_EPOCHS):
        tepoch.set_postfix(loss=running_loss / len(preds), accuracy=100. * accuracy)
 
   image_shape = first_batch.shape[0]
-  save_image(tensor=first_batch, fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=image_shape//2)
+  normal_images, adversarial_images = first_batch[:image_shape//2], first_batch[image_shape//2:]
+  save_image(tensor=torch.cat((first_batch, normal_images - adversarial_images)), fp=os.path.join(config['results_path'], f'sample{epoch:03d}.png'), scale_each=True, normalize=True, nrow=image_shape//2)
   results["Train Accuracy"].append(100. * accuracy)
   results["Loss"].append(running_loss / len(preds))
   df = pd.DataFrame(results)

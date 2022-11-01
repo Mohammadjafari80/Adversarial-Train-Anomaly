@@ -2,12 +2,14 @@ dataset: mnist #options [cifar, mnist, fashion-mnist]
 backbone: 18
 pretrained: True
 normal_class_indx: 0
-batch_size: 8
-auc_every: 5 # Takes too much time
-n_epochs: 50 # Number of all iterations
+batch_size: 32
+auc_every: 1 # Takes too much time
+n_epochs: 30 # Number of all iterations
 work_dir: ./logs/
 attack_type: PGD
-attack_params: { "eps": 0.03, "steps": 100 }
+attack_params: { "eps": 0.03, "steps": 10 }
+knn_attack: False # TODO
 results_path: ./results/ # saves results as csv row in this folder
 output_file_name: train_results # saves csv file with name {output_file_name}.csv
-exposure_folder: "/mnt/sda3/home/ma_hadi/CURRENT-CLASS-EXPOSURE/" # Path to the folder of .png files
+use_gan: False # if True, uses Gan images as exposure
+exposure_folder: "./CURRENT-CLASS-EXPOSURE/" # Path to the folder of .png files

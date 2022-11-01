@@ -5,4 +5,4 @@ from:
   - "/mnt/sda3/home/ma_hadi/SDE-inthe-middle-svhn/SDE-inthe-middle/score_sde_pytorch/TensorBank-class0-pass3.pt"
   - "/mnt/sda3/home/ma_hadi/SDE-inthe-middle-svhn/SDE-inthe-middle/score_sde_pytorch/TensorBank-class0-pass4.pt"
 
-to: "/mnt/sda3/home/ma_hadi/CURRENT-CLASS-EXPOSURE/"
+to: "./CURRENT-CLASS-EXPOSURE/" # Path to the folder of .png files

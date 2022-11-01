@@ -1,4 +1,4 @@
-from KnnAttack import Attack
+from KNN.KnnAttack import Attack
 import torch
 import torch.nn as nn
 class PGD_KNN(Attack):

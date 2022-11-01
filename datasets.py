@@ -5,6 +5,7 @@ import numpy as np
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
+from glob import glob
 
 cifar_labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 mnist_labels = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
@@ -79,17 +80,15 @@ def get_FASHION_MNIST(normal_class_indx, batch_size):
 
 class Exposure(Dataset):
     def __init__(self, root):
-        self.image_files = os.path.join(root, "*.png")
+        self.image_files = glob(os.path.join(root, "*.png"))
 
     def __getitem__(self, index):
         image_file = self.image_files[index]
         image = Image.open(image_file)
         image = image.convert('RGB')
-        if self.transform is not None:
-            image = self.transform(image)
+        image = transform(image)
 
         return image
 
     def __len__(self):
         return len(self.image_files)
-
