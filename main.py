@@ -160,6 +160,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
        tepoch.set_description(f"Epoch {epoch + 1}/{NUMBER_OF_EPOCHS}")
        data, target = data.to(device), target.to(device)
        data, target = get_data(config['use_gan'], model, exposure_loader, G, data, target, attack, device)
+       target = target.type(torch.LongTensor).cuda()
        if i == 0:
           first_batch = data.detach().clone()
        optimizer.zero_grad()
