@@ -70,6 +70,7 @@ attack_params['model'] = model
 #######################
 
 train_loader, test_loader = get_dataloader(dataset, normal_class_indx, batch_size)
+logger.info(f'Dataset: {dataset} - Normal-Class-Index: {normal_class_indx}')
 
 
 ####################
@@ -153,7 +154,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
      for i, (data, target) in enumerate(tepoch):
        tepoch.set_description(f"Epoch {epoch + 1}/{NUMBER_OF_EPOCHS}")
        data, target = data.to(device), target.to(device)
-       data, target = get_data(model, G, data, target, attack, device)
+       data, target = get_data(model, exposure_loader, G, data, target, attack, device)
        if i == 0:
           first_batch = data.detach().clone()
        optimizer.zero_grad()
