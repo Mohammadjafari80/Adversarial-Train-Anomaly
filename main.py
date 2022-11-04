@@ -29,7 +29,7 @@ batch_size = config['batch_size']
 dataset = config['dataset']
 normal_class_indx = int(config['normal_class_indx'])                              
 NUMBER_OF_EPOCHS = config['n_epochs']
-attack_params = config['attack_params']
+attack_params = config['train_attack']['attack_params']
 AUC_EVERY = config['auc_every']
 
 if not os.path.exists(config['results_path']):
@@ -92,12 +92,14 @@ else:
 
 attack = None
 
-if config['attack_type'] == 'PGD':
+if config['train_attack']['attack_type'] == 'PGD':
     attack = PGD(**attack_params)
 else:
     attack = FGSM(**attack_params)
 
 attack.set_mode_targeted_least_likely()
+
+test_attacks = [FGSM(model, eps=8/255), PGD(model, steps=10, eps=8/255)]
 
 
 results = {}
@@ -105,7 +107,8 @@ try:
     results = pd.read_csv(os.path.join(config['results_path'], f'{config["output_file_name"]}.csv')).to_dict(orient='list')
 except:
     results['Softmax AUC'] = []
-    results['Softmax Adversairal AUC'] = []
+    results['FGSM AUC'] = []
+    results['PGD-10 AUC'] = []
     results['KNN AUC'] = []
     results['KNN Adversairal AUC'] = []
     results['Train Accuracy'] = []
@@ -140,9 +143,15 @@ for epoch in range(NUMBER_OF_EPOCHS):
         auc = auc_softmax(model=model, epoch=epoch, test_loader=test_loader, device=device)
         results["Softmax AUC"].append(auc * 100)
         print('*' * 50)
-        adv_auc = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=test_loader, attack=attack, device=device)
-        results["Softmax Adversairal AUC"].append(adv_auc * 100)
+        print('FGSM')
+        adv_auc = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=test_loader, attack=test_attacks[0], device=device)
+        results["FGSM AUC"].append(adv_auc * 100)
         print('*' * 50)
+        print('PGD-10')
+        adv_auc = auc_softmax_adversarial(model=model, epoch=epoch, test_loader=test_loader, attack=test_attacks[1], device=device)
+        results["PGD-10 AUC"].append(adv_auc * 100)
+        print('*' * 50)
+
         if config['knn_attack']:
             auc, adv_auc = test_AUC(model=model, epoch=epoch, train_loader=train_loader, test_loader=test_loader, attack=attack, device=device, attack_type=config['attack_type'])
             results["KNN AUC"].append(auc * 100)
@@ -154,7 +163,8 @@ for epoch in range(NUMBER_OF_EPOCHS):
 
   else:
         results["Softmax AUC"].append('-')
-        results["Softmax Adversairal AUC"].append('-')
+        results["FGSM AUC"].append('-')
+        results["PGD-10 AUC"].append('-')
         results["KNN AUC"].append('-')
         results["KNN Adversairal AUC"].append('-')
 
@@ -173,7 +183,7 @@ for epoch in range(NUMBER_OF_EPOCHS):
        optimizer.param_groups[0].update(lr=lr)
        
        data, target = data.to(device), target.to(device)
-       data, target = get_data(config['use_gan'], model, exposure_loader, G, data, target, attack, device)
+       data, target = get_data(config['use_gan'], model, exposure_loader, G, data, target, attack, device, config['bw'])
        target = target.type(torch.LongTensor).cuda()
        if i == 0:
           first_batch = data.detach().clone()

@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torchvision.transforms as transforms
 from KNN import KnnFGSM, KnnPGD
 import torch.nn as nn
+import torch.nn.functional as F
 
 cifar10_mean = (0.4914, 0.4822, 0.4465)
 cifar10_std = (0.2471, 0.2435, 0.2616)
@@ -137,7 +138,7 @@ def auc_softmax_adversarial(model, epoch, test_loader, attack, device):
   print(f'AUC Adversairal - Softmax - score on epoch {epoch} is: {auc * 100}')
   return auc
 
-def earlystop(model, data, target, step_size, epsilon, perturb_steps,tau,randominit_type,loss_fn,rand_init=True,omega=0):
+def earlystop(model, data, target, perturb_steps, tau, epsilon=8/255, step_size=2/255, randominit_type= "uniform_randominit", loss_fn="cent", rand_init=True, omega=0):
     '''
     The implematation of early-stopped PGD
     Following the Alg.1 in our FAT paper <https://arxiv.org/abs/2002.11242>
@@ -175,7 +176,7 @@ def earlystop(model, data, target, step_size, epsilon, perturb_steps,tau,randomi
     iter_target = target.cuda().detach()
     output_iter_clean_data = model(data)
 
-    while K>0:
+    while K > 0:
         iter_adv.requires_grad_()
         output = model(iter_adv)
         pred = output.max(1, keepdim=True)[1]
@@ -197,13 +198,13 @@ def earlystop(model, data, target, step_size, epsilon, perturb_steps,tau,randomi
         if len(output_index) != 0:
             if len(output_target) == 0:
                 # incorrect adv data should not keep iterated
-                output_adv = iter_adv[output_index].reshape(-1, 3, 224, 224).cuda()
-                output_natural = iter_clean_data[output_index].reshape(-1, 3, 224, 224).cuda()
+                output_adv = iter_adv[output_index].reshape(-1, 3, 32, 32).cuda()
+                output_natural = iter_clean_data[output_index].reshape(-1, 3, 32, 32).cuda()
                 output_target = iter_target[output_index].reshape(-1).cuda()
             else:
                 # incorrect adv data should not keep iterated
-                output_adv = torch.cat((output_adv, iter_adv[output_index].reshape(-1, 3, 224, 224).cuda()), dim=0)
-                output_natural = torch.cat((output_natural, iter_clean_data[output_index].reshape(-1, 3, 224, 224).cuda()), dim=0)
+                output_adv = torch.cat((output_adv, iter_adv[output_index].reshape(-1, 3, 32, 32).cuda()), dim=0)
+                output_natural = torch.cat((output_natural, iter_clean_data[output_index].reshape(-1, 3, 32, 32).cuda()), dim=0)
                 output_target = torch.cat((output_target, iter_target[output_index].reshape(-1).cuda()), dim=0)
 
         # calculate gradient
@@ -238,17 +239,17 @@ def earlystop(model, data, target, step_size, epsilon, perturb_steps,tau,randomi
 
     if len(output_target) == 0:
         output_target = iter_target.reshape(-1).squeeze().cuda()
-        output_adv = iter_adv.reshape(-1, 3, 224, 224).cuda()
-        output_natural = iter_clean_data.reshape(-1, 3, 224, 224).cuda()
+        output_adv = iter_adv.reshape(-1, 3, 32, 32).cuda()
+        output_natural = iter_clean_data.reshape(-1, 3, 32, 32).cuda()
     else:
-        output_adv = torch.cat((output_adv, iter_adv.reshape(-1, 3, 224, 224)), dim=0).cuda()
+        output_adv = torch.cat((output_adv, iter_adv.reshape(-1, 3, 32, 32)), dim=0).cuda()
         output_target = torch.cat((output_target, iter_target.reshape(-1)), dim=0).squeeze().cuda()
-        output_natural = torch.cat((output_natural, iter_clean_data.reshape(-1, 3, 224, 224).cuda()),dim=0).cuda()
+        output_natural = torch.cat((output_natural, iter_clean_data.reshape(-1, 3, 32, 32).cuda()),dim=0).cuda()
     output_adv = output_adv.detach()
-    return output_adv, output_target, output_natural, count
+    return output_adv, output_target
 
 
-def get_data(use_gan, model, exposure_loader, G, data, target, attack, device):
+def get_data(use_gan, model, exposure_loader, G, data, target, attack, device, bw):
     model.eval()
 
     fake_data = None
@@ -261,6 +262,9 @@ def get_data(use_gan, model, exposure_loader, G, data, target, attack, device):
       fake_data = (x - torch.min(x))/(torch.max(x)- torch.min(x))
     else:
       fake_data = next(iter(exposure_loader)).to(device)
+
+    if bw:
+        fake_data = transforms.Grayscale(3)(fake_data)
 
     fake_target = torch.ones((fake_data.shape[0]), device=device)
 
