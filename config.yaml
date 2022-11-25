@@ -16,3 +16,5 @@ output_file_name: train_results # saves csv file with name {ou   tput_file_name}
 use_gan: True # if True, uses Gan images as exposure
 exposure_folder: "./CURRENT-CLASS-EXPOSURE/" # Path to the folder of .png files
 bw: True # Black & White
+eps: 8 # the noise magnitude gonna be eps/255
+earlystop_attack: True

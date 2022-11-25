@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from model import FeatureExtractor
-from utills import knn_score, test_AUC, auc_softmax, auc_softmax_adversarial, get_data
+from utills import knn_score, test_AUC, auc_softmax, auc_softmax_adversarial, get_data, earlystop
 import yaml
 from torchvision.datasets import CIFAR10, MNIST
 import numpy as np
@@ -99,7 +99,7 @@ else:
 
 attack.set_mode_targeted_least_likely()
 
-test_attacks = [FGSM(model, eps=8/255), PGD(model, steps=10, eps=8/255)]
+test_attacks = [FGSM(model, eps=config['eps']/255), PGD(model, steps=10, eps=config['eps']/255)]
 
 
 results = {}
@@ -185,8 +185,19 @@ for epoch in range(NUMBER_OF_EPOCHS):
        data, target = data.to(device), target.to(device)
        data, target = get_data(config['use_gan'], model, exposure_loader, G, data, target, attack, device, config['bw'])
        target = target.type(torch.LongTensor).cuda()
+       
+       model.eval()
+
+       if config['earlystop_attack']:
+            data, target = earlystop(model, data, target, perturb_steps=20, tau=2, epsilon=config['eps']/255)
+       else:
+            data, target = attack(data, target)
+
+       model.train()
+       target = target.type(torch.LongTensor).cuda()
        if i == 0:
           first_batch = data.detach().clone()
+          
        optimizer.zero_grad()
        output = model(data)
        predictions = output.argmax(dim=1, keepdim=True).squeeze()
