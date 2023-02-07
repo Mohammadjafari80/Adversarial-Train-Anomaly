@@ -110,11 +110,3 @@ def PreActResNet101():
 def PreActResNet152():
     return PreActResNet(PreActBottleneck, [3,8,36,3])
 
-
-def test():
-    net = PreActResNet152()
-    y = net((torch.randn(10,3,32,32)))
-    print(net)
-
-
-test()
